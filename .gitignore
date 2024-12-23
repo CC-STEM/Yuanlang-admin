@@ -1,0 +1,14 @@
+node_modules
+.DS_Store
+dist*
+dist-ssr
+*.local
+.eslintcache
+.stylelintcache
+src/assets/sprites/*.*
+!src/assets/sprites/.gitkeep
+public/icons
+.env
+.env.test
+.env.example
+.env.production
