@@ -7,12 +7,13 @@ meta:
 import { onMounted, reactive, ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
-import ApiUsre from '@/api/modules/user'
+import ApiUser from '@/api/modules/user'
 import type { UserStatus } from '@/constants/index'
 import { USER_STATUS_MAP, USER_STATUS_OPTIONS, USER_STATUS_TYPE_MAP } from '@/constants/index'
 import { utcToShanghaiTime } from '@/utils/utcformatTime'
 
 const formRef = ref<FormInstance>()
+const createUserFormRef = ref<FormInstance>()
 const total = ref(0)
 const visible = ref(false)
 const loading = ref(false)
@@ -39,6 +40,16 @@ const formInline = reactive({
   page: 1,
   size: 15,
 })
+
+const createUserForm = reactive({
+  name: '',
+  username: '',
+  email: '',
+  password: '',
+  phone: '',
+})
+
+const createUserVisible = ref(false)
 
 interface BanlanceInfo {
   drawMjCount: number
@@ -74,12 +85,20 @@ const rules = reactive<FormRules>({
   drawMjCount: [{ required: true, message: '请填写赠绘画积分额度', trigger: 'blur' }],
 })
 
+const createUserRules = reactive<FormRules>({
+  name: [{ required: false, message: '请填写用户真实姓名', trigger: 'blur' }],
+  username: [{ required: true, message: '请填写用户名', trigger: 'blur' }],
+  email: [{ required: false, message: '请填写用户邮箱', trigger: 'blur' }],
+  password: [{ required: true, message: '请填写用户密码', trigger: 'blur' }],
+  phone: [{ required: false, message: '请填写用户手机号', trigger: 'blur', len: 11 }],
+})
+
 const tableData = ref<UserItem[]>([])
 
 async function queryAllUserList() {
   try {
     loading.value = true
-    const res = await ApiUsre.queryAllUser(formInline)
+    const res = await ApiUser.queryAllUser(formInline)
     const { rows, count } = res.data
     loading.value = false
     total.value = count
@@ -102,7 +121,7 @@ function handleSendCrami(row: UserItem) {
 }
 
 async function handlerUpateUserStatus() {
-  const res: any = await ApiUsre.updateUserStatus(form)
+  const res: any = await ApiUser.updateUserStatus(form)
   res.success && ElMessage({ type: 'success', message: '变更用户状态成功！' })
   visible.value = false
   queryAllUserList()
@@ -113,9 +132,15 @@ function handlerReset(formEl: FormInstance | undefined) {
   queryAllUserList()
 }
 
+
+
+const handleCreateUser = async () => {
+  createUserVisible.value = true
+}
+
 async function handlerResetUserPass(row: any) {
   const { id, email } = row
-  const res: any = await ApiUsre.resetUserPassword({ id })
+  const res: any = await ApiUser.resetUserPassword({ id })
   res.success && ElMessage({ type: 'success', message: `重置用户[${email}密码为初始密码为[123456]完成！` })
 }
 
@@ -129,10 +154,25 @@ async function handlerSubmitSend(formEl: FormInstance | undefined) {
     if (!valid) {
       return
     }
-    await ApiUsre.sendUserCrami({ ...formCrami, userId: activeUserId.value })
+    await ApiUser.sendUserCrami({ ...formCrami, userId: activeUserId.value })
     ElMessage.success('赠送用户成功！')
     visibleCrami.value = false
     queryAllUserList()
+  })
+}
+
+const handleCloseCreateUserDialog = (formEl: FormInstance | undefined) => {
+  formEl?.resetFields()
+}
+
+function handlerCreateUserSubmit(formEl: FormInstance | undefined) {
+  formEl?.validate(async (valid) => {
+    if (valid) {
+      await ApiUser.createUser(createUserForm)
+      ElMessage({ type: 'success', message: '创建新用户成功！' })
+      createUserVisible.value = false
+      queryAllUserList()
+    }
   })
 }
 
@@ -164,6 +204,9 @@ onMounted(() => queryAllUserList())
           <el-button @click="handlerReset(formRef)">
             重置
           </el-button>
+          <el-button @click="handleCreateUser(formRef)">
+            新建用户
+          </el-button>
         </el-form-item>
       </el-form>
     </page-main>
@@ -172,9 +215,7 @@ onMounted(() => queryAllUserList())
       <el-table v-loading="loading" border :data="tableData" style="width: 100%;" size="large">
         <el-table-column prop="avatar" label="用户头像" fixed width="120">
           <template #default="scope">
-            <el-avatar
-              :src="scope.row.avatar"
-            />
+            <el-avatar :src="scope.row.avatar" />
           </template>
         </el-table-column>
         <el-table-column fixed prop="username" label="用户名称" width="150" />
@@ -197,7 +238,8 @@ onMounted(() => queryAllUserList())
         <el-table-column prop="balanceInfo.drawMjCount" label="会员到期时间" width="170" align="center">
           <template #default="scope">
             <el-tag type="success">
-              {{ scope.row?.balanceInfo?.expirationTime ? utcToShanghaiTime(new Date(scope.row?.balanceInfo?.expirationTime)) : '非会员' }}
+              {{ scope.row?.balanceInfo?.expirationTime ? utcToShanghaiTime(new
+                Date(scope.row?.balanceInfo?.expirationTime)) : '非会员' }}
             </el-tag>
           </template>
         </el-table-column>
@@ -230,7 +272,8 @@ onMounted(() => queryAllUserList())
             <el-button link type="primary" size="small" @click="handleUpdateStatus(scope.row)">
               修改状态
             </el-button>
-            <el-popconfirm title="确认重置此用户密码为【123456】?" confirm-button-text="确认重置" @confirm="handlerResetUserPass(scope.row)">
+            <el-popconfirm title="确认重置此用户密码为【123456】?" confirm-button-text="确认重置"
+              @confirm="handlerResetUserPass(scope.row)">
               <template #reference>
                 <el-button link type="danger">
                   重置密码
@@ -244,16 +287,9 @@ onMounted(() => queryAllUserList())
         </el-table-column>
       </el-table>
       <el-row class="flex justify-end mt-5">
-        <el-pagination
-          v-model:current-page="formInline.page"
-          v-model:page-size="formInline.size"
-          class="mr-5"
-          :page-sizes="[15, 30, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
-          @size-change="queryAllUserList"
-          @current-change="queryAllUserList"
-        />
+        <el-pagination v-model:current-page="formInline.page" v-model:page-size="formInline.size" class="mr-5"
+          :page-sizes="[15, 30, 50, 100]" layout="total, sizes, prev, pager, next, jumper" :total="total"
+          @size-change="queryAllUserList" @current-change="queryAllUserList" />
       </el-row>
     </page-main>
 
@@ -292,6 +328,36 @@ onMounted(() => queryAllUserList())
         <el-button type="primary" @click="handlerSubmitSend(cramiRef)">
           确认赠送
         </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="createUserVisible" :close-on-click-modal="false" :title="'新建用户'" width="570"
+      @close="handleCloseCreateUserDialog(createUserFormRef)">
+      <el-form ref="createUserFormRef" label-position="right" label-width="100px" :model="createUserForm"
+        :rules="createUserRules">
+        <el-form-item label="账户名" prop="username">
+          <el-input v-model="createUserForm.username" placeholder="请输入账户名" />
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="createUserForm.password" placeholder="请输入账户密码" />
+        </el-form-item>
+        <el-form-item label="真实姓名" prop="name">
+          <el-input v-model="createUserForm.name" placeholder="请输入用户真实姓名" />
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="createUserForm.email" placeholder="请输入用户邮箱" />
+        </el-form-item>
+        <el-form-item label="手机号" prop="phone">
+          <el-input v-model="createUserForm.phone" placeholder="请输入手机号" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="flex justify-end mr-5">
+          <el-button @click="createUserVisible = false">取消</el-button>
+          <el-button type="primary" @click="handlerCreateUserSubmit(createUserFormRef)">
+            {{ '确认创建' }}
+          </el-button>
+        </span>
       </template>
     </el-dialog>
   </div>
