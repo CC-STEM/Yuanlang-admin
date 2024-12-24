@@ -39,7 +39,7 @@ jobs:
       # 打包生成制品，且把制品压缩到assets.zip压缩包里
       - name: Building
         run: |
-          pnpm run generate:prod
+          npm run build:test
           zip -r assets ./dist/**
       # 基于当前commit进行版本发布(Create a release)，tag_name是v前缀加上package.json的version值
       - name: Create GitHub Release
