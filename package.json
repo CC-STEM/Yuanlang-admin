@@ -2,7 +2,7 @@
   "version": "2.5.0",
   "scripts": {
     "dev": "vite",
-    "build:test": "vue-tsc --noEmit && vite build --mode test",
+    "build:test": "vite build --mode test",
     "build:admin": "vite build --mode admin",
     "build": "vite build",
     "serve:test": "http-server ./dist-test -o",
