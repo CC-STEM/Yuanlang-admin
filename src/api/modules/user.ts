@@ -29,4 +29,12 @@ export default {
     oldPassword: string
     password: string
   }) => api.post('auth/updatePassword', data),
+
+  createUser: (data: {
+    username: string
+    password: string
+    email: string
+    phone: string
+    name: string
+  }) => api.post('user/createUserAccount', data),
 }

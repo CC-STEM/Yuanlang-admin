@@ -36,7 +36,8 @@ export default ({ mode, command }) => {
     },
     // 构建选项 https://cn.vitejs.dev/config/#server-fsserve-root
     build: {
-      outDir: mode === 'production' ? 'dist' : `dist-${mode}`,
+      // outDir: mode === 'production' ? 'dist' : `dist-${mode}`,
+      outDir: 'dist',
       sourcemap: env.VITE_BUILD_SOURCEMAP === 'true',
       minify: true,
       reportCompressedSize: false,
