@@ -8,7 +8,3 @@ dist-ssr
 src/assets/sprites/*.*
 !src/assets/sprites/.gitkeep
 public/icons
-.env
-.env.test
-.env.example
-.env.production
