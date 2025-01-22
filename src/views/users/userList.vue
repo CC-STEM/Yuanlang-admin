@@ -222,7 +222,7 @@ onMounted(() => queryAllUserList())
           <el-input v-model="formInline.phone" placeholder="手机号码[模糊搜索]" clearable />
         </el-form-item>
         <el-form-item label="用户状态" prop="status">
-          <el-select v-model="formInline.status" placeholder="请选择用户状态" clearable>
+          <el-select style="width: 100px;" v-model="formInline.status" placeholder="请选择用户状态" clearable>
             <el-option v-for="item in USER_STATUS_OPTIONS" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
