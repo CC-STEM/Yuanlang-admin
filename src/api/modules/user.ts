@@ -12,6 +12,8 @@ export default {
 
   queryAllUser: params => api.get('user/queryAll', { params }),
 
+  queryAllUserNew: params => api.get('user/queryAllUsers', { params }),
+
   updateUserStatus: (data: {
     status: string
   }) => api.post('user/updateStatus', data),
@@ -37,4 +39,9 @@ export default {
     phone: string
     name: string
   }) => api.post('user/createUserAccount', data),
+
+  configBalance: (data: {
+    userId: number
+    balance: number
+  }) => api.post('accountBalance/update', data),
 }

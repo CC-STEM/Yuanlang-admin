@@ -21,6 +21,9 @@ const visibleCrami = ref(false)
 const activeUserId = ref(0)
 const cramiRef = ref<FormInstance>()
 
+const visibleConfigBalance = ref(false)
+const configBalanceRef = ref<FormInstance>()
+
 const form = reactive({
   status: 0,
   id: 0,
@@ -30,6 +33,10 @@ const formCrami = reactive({
   model3Count: 0,
   model4Count: 0,
   drawMjCount: 0,
+})
+
+const formBalance = reactive({
+  balance: 0
 })
 
 const formInline = reactive({
@@ -77,6 +84,10 @@ interface UserItem {
   createdAt: Date
   updatedAt: Date
   balanceInfo: BanlanceInfo
+  accountBalanceInfo?: {
+    balance: number
+    usedBalance: number
+  }
 }
 
 const rules = reactive<FormRules>({
@@ -98,7 +109,7 @@ const tableData = ref<UserItem[]>([])
 async function queryAllUserList() {
   try {
     loading.value = true
-    const res = await ApiUser.queryAllUser(formInline)
+    const res = await ApiUser.queryAllUserNew(formInline)
     const { rows, count } = res.data
     loading.value = false
     total.value = count
@@ -118,6 +129,12 @@ function handleUpdateStatus(row: UserItem) {
 function handleSendCrami(row: UserItem) {
   visibleCrami.value = true
   activeUserId.value = row.id
+}
+
+const handleConfigBalance = (row: UserItem) => {
+  visibleConfigBalance.value = true
+  activeUserId.value = row.id
+  formBalance.balance = row.accountBalanceInfo?.balance || 0
 }
 
 async function handlerUpateUserStatus() {
@@ -161,6 +178,18 @@ async function handlerSubmitSend(formEl: FormInstance | undefined) {
   })
 }
 
+const handleSubmitConfigBalance = async (formEl: FormInstance | undefined) => {
+  formEl?.validate(async (valid) => {
+    if (!valid) {
+      return
+    }
+    await ApiUser.configBalance({ ...formBalance, userId: activeUserId.value })
+    ElMessage.success('修改用户积分成功！')
+    visibleConfigBalance.value = false
+    queryAllUserList()
+  })
+}
+
 const handleCloseCreateUserDialog = (formEl: FormInstance | undefined) => {
   formEl?.resetFields()
 }
@@ -193,7 +222,7 @@ onMounted(() => queryAllUserList())
           <el-input v-model="formInline.phone" placeholder="手机号码[模糊搜索]" clearable />
         </el-form-item>
         <el-form-item label="用户状态" prop="status">
-          <el-select style="width: 100px;" v-model="formInline.status" placeholder="请选择用户状态" clearable>
+          <el-select v-model="formInline.status" placeholder="请选择用户状态" clearable>
             <el-option v-for="item in USER_STATUS_OPTIONS" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
@@ -204,7 +233,7 @@ onMounted(() => queryAllUserList())
           <el-button @click="handlerReset(formRef)">
             重置
           </el-button>
-          <el-button @click="handleCreateUser(formRef)">
+          <el-button @click="handleCreateUser()">
             新建用户
           </el-button>
         </el-form-item>
@@ -232,33 +261,10 @@ onMounted(() => queryAllUserList())
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="balanceInfo.model3Count" label="基础模型" width="120" align="center" />
-        <el-table-column prop="balanceInfo.model4Count" label="高级模型" width="120" align="center" />
-        <el-table-column prop="balanceInfo.drawMjCount" label="绘画余额" width="120" align="center" />expirationTime
-        <el-table-column prop="balanceInfo.drawMjCount" label="会员到期时间" width="170" align="center">
+        <el-table-column prop="accountBalanceInfo.balance" label="绘画余额积分" width="120" align="center" />
+        <el-table-column prop="accountBalanceInfo.usedBalance" label="已用绘画积分" width="160" align="center">
           <template #default="scope">
-            <el-tag type="success">
-              {{ scope.row?.balanceInfo?.expirationTime ? utcToShanghaiTime(new
-                Date(scope.row?.balanceInfo?.expirationTime)) : '非会员' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="balanceInfo.memberModel3Count" label="基础模型[会员]" width="120" align="center" />
-        <el-table-column prop="balanceInfo.memberModel4Count" label="高级模型[会员]" width="120" align="center" />
-        <el-table-column prop="balanceInfo.memberDrawMjCount" label="绘画余额[会员]" width="120" align="center" />
-        <el-table-column prop="balanceInfo.useModel3Count" label="已用基础模型" width="160" align="center">
-          <template #default="scope">
-            {{ `${scope.row.balanceInfo?.useModel3Count || 0}次 | ${scope.row.balanceInfo?.useModel3Token || 0} Token` }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="balanceInfo.useModel4Count" label="已用高级模型" width="160" align="center">
-          <template #default="scope">
-            {{ `${scope.row.balanceInfo?.useModel4Count || 0}次 | ${scope.row.balanceInfo?.useModel4Token || 0} Token` }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="balanceInfo.useDrawMjToken" label="已用绘画积分" width="160" align="center">
-          <template #default="scope">
-            {{ `${scope.row.balanceInfo?.useDrawMjToken || 0} Token` }}
+            {{ `${scope.row.accountBalanceInfo?.usedBalance || 0} 积分` }}
           </template>
         </el-table-column>
         <!-- <el-table-column prop="lastLoginIp" label="最后登录IP" width="140" align="center" /> -->
@@ -280,8 +286,11 @@ onMounted(() => queryAllUserList())
                 </el-button>
               </template>
             </el-popconfirm>
-            <el-button link type="primary" size="small" @click="handleSendCrami(scope.row)">
+            <!-- <el-button link type="primary" size="small" @click="handleSendCrami(scope.row)">
               赠送卡密
+            </el-button> -->
+            <el-button link type="primary" size="small" @click="handleConfigBalance(scope.row)">
+              修改积分
             </el-button>
           </template>
         </el-table-column>
@@ -327,6 +336,22 @@ onMounted(() => queryAllUserList())
         </el-button>
         <el-button type="primary" @click="handlerSubmitSend(cramiRef)">
           确认赠送
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="visibleConfigBalance" title="配置积分" width="450px" @close="handlerCloseDialog(configBalanceRef)">
+      <el-form ref="configBalanceRef" :model="formBalance" :rules="rules" label-width="115px">
+        <el-form-item label="积分" prop="balance">
+          <el-input v-model.number="formBalance.balance" type="number" placeholder="配置积分" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="visibleConfigBalance = false">
+          取消
+        </el-button>
+        <el-button type="primary" @click="handleSubmitConfigBalance(configBalanceRef)">
+          确认修改
         </el-button>
       </template>
     </el-dialog>
