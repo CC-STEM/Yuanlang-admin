@@ -15,6 +15,15 @@ const routes: RouteRecordRaw = {
   },
   children: [
     {
+      path: 'newlist',
+      name: 'newUserMenuList',
+      component: () => import('@/views/users/userList.vue'),
+      meta: {
+        title: '用户数据列表(新)',
+        icon: 'menu-userlist'
+      },
+    },
+    {
       path: 'list',
       name: 'userMenuList',
       component: () => import('@/views/users/index.vue'),
@@ -23,6 +32,7 @@ const routes: RouteRecordRaw = {
         icon: 'menu-userlist'
       },
     },
+
     {
       path: 'account-log',
       name: 'AccountLogMenu',
