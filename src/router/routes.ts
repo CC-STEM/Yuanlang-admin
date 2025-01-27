@@ -15,6 +15,9 @@ import StorageMenu from './modules/storage.menu'
 import SecureMenu from './modules/secure.menu'
 import AiMenu from './modules/ai.menu'
 import LoginMenu from './modules/login.menu'
+import GoodsMenu from './modules/goods.menu'
+import ActivityMenu from './modules/activity.menu'
+import StudyResourceMenu from './modules/studyResource.menu'
 
 import type { Route } from '#/global'
 import useSettingsStore from '@/store/modules/settings'
@@ -102,6 +105,9 @@ const asyncRoutes: Route.recordMainRaw[] = [
       AiMenu,
       ChatMenu,
       OrderMenu,
+      GoodsMenu,
+      ActivityMenu,
+      StudyResourceMenu,
       PackageMenu,
       AppMenu,
       SalesMenu,
