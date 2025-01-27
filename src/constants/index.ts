@@ -350,3 +350,84 @@ export const ModelTypeLabelMap = {
   2: "client_id",
   3: "AppKey",
 };
+
+
+// 商品上架状态 0 未上架 1 已上架
+export const GOODS_SELL_STATUS_OPTIONS = [
+  { value: 0, label: "未上架" },
+  { value: 1, label: "已上架" },
+];
+
+export const GOODS_SELL_STATUS_MAP = {
+  0: "未上架",
+  1: "已上架",
+};
+
+// 活动上线状态 0 下线 1 上线
+export const ACTIVITY_STATUS_OPTIONS = [
+  { value: 0, label: "下线" },
+  { value: 1, label: "上线" },
+];
+
+export const ACTIVITY_STATUS_MAP = {
+  0: "下线",
+  1: "上线",
+};
+
+export const STUDY_RESOURCE_LEVEL_OPTIONS = [
+  { value: 0, label: "基础练习场" },
+  { value: 1, label: "专业练习场" },
+];
+
+export const STUDY_RESOURCE_LEVEL_MAP = {
+  0: "基础练习场",
+  1: "专业练习场",
+};
+
+export const STUDY_RESOURCE_CATEGORY_OPTIONS = [
+  { value: 0, label: "抱枕设计" },
+  { value: 1, label: "帆布袋设计" },
+  { value: 2, label: "手机壳设计" },
+  { value: 3, label: "T恤设计" },
+];
+
+export const STUDY_RESOURCE_CATEGORY_MAP = {
+  0: "抱枕设计",
+  1: "帆布袋设计",
+  2: "手机壳设计",
+  3: "T恤设计",
+};
+
+export const NEW_PAY_STATUS_OPTIONS = [
+  { value: 0, label: "未支付" },
+  { value: 1, label: "已支付" },
+  { value: -1, label: "支付失败" },
+];
+
+export const NEW_PAY_STATUS_MAP = {
+  0: "未支付",
+  1: "已支付",
+  "-1": "支付失败",
+}
+
+export const NEW_ORDER_STATUS_OPTIONS = [
+  { value: 0, label: "待付款" },
+  { value: 0, label: "待发货" },
+  { value: 0, label: "已发货" },
+  { value: 0, label: "交易成功" },
+  { value: 0, label: "售后中" },
+  { value: 0, label: "交易关闭-用户取消" },
+  { value: 0, label: "交易关闭-超时取消" },
+  { value: 0, label: "交易关闭-商家取消" },
+]
+
+export const NEW_ORDER_STATUS_MAP = {
+  0: "待付款",
+  1: "待发货",
+  2: "已发货",
+  3: "交易成功",
+  4: "售后中",
+  5: "交易关闭-用户取消",
+  6: "交易关闭-超时取消",
+  7: "交易关闭-商家取消",
+}
