@@ -15,11 +15,20 @@ const routes: RouteRecordRaw = {
   },
   children: [
     {
-      path: 'base',
-      name: 'systemMenuBase',
-      component: () => import('@/views/system/base.vue'),
+      path: 'dictType',
+      name: 'dictTypeMenuBase',
+      component: () => import('@/views/system/dictType.vue'),
       meta: {
-        title: '百度统计设置',
+        title: '字典类型管理',
+        icon: 'menu-baidutongji',
+      },
+    },
+    {
+      path: 'dictData',
+      name: 'dictDataMenuBase',
+      component: () => import('@/views/system/dictData.vue'),
+      meta: {
+        title: '字典数据管理',
         icon: 'menu-baidutongji',
       },
     },
