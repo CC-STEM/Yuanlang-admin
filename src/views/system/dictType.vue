@@ -28,7 +28,7 @@ const formInline = reactive<API.QueryDictTypeBody>({
 const formDictTypeRef = ref<FormInstance>()
 const activeDictTypeId = ref(0)
 const activeDictType = ref<API.DictType | null>(null)
-let formDictType = reactive<API.DictType>({
+let formDictType = ref<API.DictType>({
   name: '',
   type: '',
   status: 0,
@@ -70,7 +70,7 @@ async function queryDictTypeList() {
 function handleUpdateDictType(row: API.DictType) {
   activeDictTypeId.value = row.id!
   activeDictType.value = { ...row }
-  formDictType = { ...row }
+  formDictType.value = { ...row }
   visible.value = true
 }
 
@@ -94,11 +94,11 @@ function handlerSubmit(formEl: FormInstance | undefined) {
   formEl?.validate(async (valid) => {
     if (valid) {
       if (activeDictTypeId.value) {
-        await ApiDictType.updateDictType({ id: activeDictTypeId.value, ...formDictType })
+        await ApiDictType.updateDictType({ id: activeDictTypeId.value, ...formDictType.value })
         ElMessage({ type: 'success', message: '更新字典类型成功！' })
       }
       else {
-        await ApiDictType.createDictType(formDictType as API.CreateDictTypeBody)
+        await ApiDictType.createDictType(formDictType.value as API.CreateDictTypeBody)
         ElMessage({ type: 'success', message: '创建新字典类型成功！' })
       }
       visible.value = false
@@ -109,6 +109,12 @@ function handlerSubmit(formEl: FormInstance | undefined) {
 
 const handleClickDictType = (row: API.DictType) => {
   router.push({ path: '/system/dictData', query: { type: row.type } })
+}
+
+const createDictType = () => {
+  activeDictTypeId.value = 0
+  formDictType.value = { name: '', type: '', status: 0, remark: '' }
+  visible.value = true
 }
 
 onMounted(() => {
@@ -144,7 +150,7 @@ onMounted(() => {
             重置
           </el-button>
         </el-form-item>
-        <el-button type="success" style="float: right;" @click="visible = true">
+        <el-button type="success" style="float: right;" @click="createDictType">
           创建字典类型
           <el-icon class="ml-3">
             <Plus />

@@ -10,6 +10,7 @@ import type { FormInstance, FormRules, UploadProps } from 'element-plus'
 import ApiActivity from '@/api/modules/activity'
 import { utcToShanghaiTime } from '@/utils/utcformatTime'
 import { ACTIVITY_STATUS_OPTIONS, ACTIVITY_STATUS_MAP } from '@/constants/index'
+import { useDictStore } from '@/store/modules/dict'
 
 import { API } from '#/global'
 
@@ -18,18 +19,22 @@ const total = ref(0)
 const visible = ref(false)
 const loading = ref(false)
 const uploadUrl = ref(`${import.meta.env.VITE_APP_API_BASEURL}/upload/file`)
+const dictStore = useDictStore()
+
 
 const formInline = reactive<API.QueryActivityBody>({
   name: '',
   page: 1,
   size: 10,
-  status: 0
+  // status: 0
 })
 
 const formActivityRef = ref<FormInstance>()
 const activeActivityId = ref(0)
-const activeActivity = ref<API.Activity | null>(null)
-let formActivity = reactive<API.Activity>({
+// const activeActivity = ref<API.Activity | null>(null)
+const activityJoinDictMap = computed(() => dictStore.dictMap && dictStore.dictMap['activity_join_type'])
+
+let formActivity = ref<API.Activity>({
   name: '',
   intro: '',
   category: 0,
@@ -77,8 +82,8 @@ async function queryActivityList() {
 
 function handleUpdateActivity(row: API.Activity) {
   activeActivityId.value = row.id!
-  activeActivity.value = row
-  formActivity = row
+  // activeActivity.value = row
+  formActivity.value = { ...row }
   visible.value = true
 }
 
@@ -102,7 +107,7 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = (
   response,
   uploadFile,
 ) => {
-  formActivity.coverImg = response.data
+  formActivity.value.coverImg = response.data
 }
 
 const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
@@ -120,15 +125,29 @@ const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
   return true
 }
 
+const createActivity = () => {
+  visible.value = true
+  formActivity.value = {
+    name: '',
+    intro: '',
+    category: 0,
+    coverImg: '',
+    activityRewards: '',
+    startTime: '',
+    endTime: '',
+    status: 0
+  }
+}
+
 function handlerSubmit(formEl: FormInstance | undefined) {
   formEl?.validate(async (valid) => {
     if (valid) {
       if (activeActivityId.value) {
-        await ApiActivity.updateActivity({ id: activeActivityId.value, ...formActivity })
+        await ApiActivity.updateActivity({ id: activeActivityId.value, ...formActivity.value })
         ElMessage({ type: 'success', message: '更新活动成功！' })
       }
       else {
-        await ApiActivity.createActivity(formActivity as API.CreateActivityBody)
+        await ApiActivity.createActivity(formActivity.value as API.CreateActivityBody)
         ElMessage({ type: 'success', message: '创建新活动成功！' })
       }
       visible.value = false
@@ -136,6 +155,9 @@ function handlerSubmit(formEl: FormInstance | undefined) {
     }
   })
 }
+
+
+
 onMounted(() => {
   queryActivityList()
 })
@@ -165,7 +187,7 @@ onMounted(() => {
             重置
           </el-button>
         </el-form-item>
-        <el-button type="success" style="float: right;" @click="visible = true">
+        <el-button type="success" style="float: right;" @click="createActivity">
           创建活动
           <el-icon class="ml-3">
             <Plus />
@@ -182,7 +204,11 @@ onMounted(() => {
           </template>
         </el-table-column>
         <el-table-column prop="name" label="活动名称" />
-        <el-table-column prop="category" label="参与方式" />
+        <el-table-column prop="category" label="参与方式">
+          <template #default="scope">
+            <span>{{ activityJoinDictMap?.find(item => Number(item.value) === scope.row.category)?.label }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="activityRewards" label="活动奖励" />
         <el-table-column prop="status" label="活动状态">
           <template #default="scope">
@@ -232,7 +258,13 @@ onMounted(() => {
         <el-form-item label="活动状态" prop="status">
           <el-switch v-model="formActivity.status" :active-value="1" :inactive-value="0" />
         </el-form-item>
-
+        <el-form-item label="参与方式" prop="category">
+          <!-- <el-switch v-model="formActivity.status" :active-value="1" :inactive-value="0" /> -->
+          <el-select v-model="formActivity.category" placeholder="请选择参与方式" clearable>
+            <el-option v-for="item in activityJoinDictMap" :key="item.value" :label="item.label"
+              :value="Number(item.value)" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="活动封面" prop="coverImg">
           <el-upload class="avatar-uploader" :action="uploadUrl" :show-file-list="false"
             :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">

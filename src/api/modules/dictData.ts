@@ -6,4 +6,5 @@ export default {
   deleteDictData: (data: { id: number }) => api.post('dictData/delete', data),
   updateDictData: (data: API.UpdateDictDataBody) => api.post('dictData/update', data),
   createDictData: (data: API.CreateDictDataBody) => api.post('dictData/create', data),
+  queryDictMap: () => api.get<API.DictState>('dictData/dictMap'),
 }
