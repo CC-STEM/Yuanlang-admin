@@ -44,6 +44,7 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response) => {
+    console.log('response', response)
     /**
      * 全局拦截请求发送后返回的数据，如果数据有报错则在这做全局的错误提示
      * 假设返回数据格式为：{ status: 1, error: '', data: '' }
@@ -59,7 +60,7 @@ api.interceptors.response.use(
       if (status === 401) {
         msg = '权限验证失败，请重新登录'
         // loginout
-        if(data.code === 401 && data.message.includes('请登录后继续操作')){
+        if (data.code === 401 && data.message.includes('请登录后继续操作')) {
           const userStore = useUserStore()
           userStore.logout().then(() => {
             router.push({ name: 'login' })

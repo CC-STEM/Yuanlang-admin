@@ -8,6 +8,7 @@ import { onMounted, reactive, ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import ApiGoodsOrder from '@/api/modules/goodsOrder'
+import { NEW_ORDER_STATUS_OPTIONS, NEW_ORDER_STATUS_MAP } from '@/constants'
 import { NEW_PAY_STATUS_OPTIONS, NEW_PAY_STATUS_MAP } from '@/constants/index'
 
 import { API } from '#/global'
@@ -144,14 +145,13 @@ onMounted(() => {
         <el-form-item label="订单号" prop="orderNo">
           <el-input v-model="formInline.orderNo" placeholder="订单号[模糊搜索]" @keydown.enter.prevent="queryGoodsOrderList" />
         </el-form-item>
-        <el-form-item label="用户ID" prop="userId">
+        <el-form-item label="用户ID" prop="userName">
           <el-input v-model="formInline.userId" placeholder="用户ID[模糊搜索]" @keydown.enter.prevent="queryGoodsOrderList" />
         </el-form-item>
         <el-form-item style="width: 200px;" label="订单状态" prop="status">
           <el-select v-model="formInline.status" placeholder="请选择订单状态" clearable>
-            <el-option
-              v-for="item in [{ value: 0, label: '待付款' }, { value: 1, label: '待发货' }, { value: 2, label: '已发货' }, { value: 3, label: '交易成功' }, { value: 4, label: '售后中' }, { value: 5, label: '交易关闭-用户取消' }, { value: 6, label: '交易关闭-超时取消' }, { value: 7, label: '交易关闭-商家取消' }]"
-              :key="item.value" :label="item.label" :value="item.value" />
+            <el-option v-for="item in NEW_ORDER_STATUS_OPTIONS" :key="item.value" :label="item.label"
+              :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -177,6 +177,7 @@ onMounted(() => {
         <el-table-column prop="payPlatform" label="支付平台" />
         <el-table-column prop="channel" label="支付渠道" />
         <el-table-column prop="userId" label="用户ID" />
+        <el-table-column prop="userName" label="用户名" />
         <el-table-column prop="total" label="订单总金额" />
         <el-table-column prop="payStatus" label="支付状态">
           <template #default="scope">
@@ -187,10 +188,8 @@ onMounted(() => {
         </el-table-column>
         <el-table-column prop="status" label="订单状态">
           <template #default="scope">
-            <el-tag
-              :type="scope.row.status === 3 ? 'success' : scope.row.status === 2 ? 'info' : scope.row.status === 1 ? 'warning' : 'danger'">
-              {{ scope.row.status === 3 ? '交易成功' : scope.row.status === 2 ? '已发货' : scope.row.status === 1 ? '待发货' :
-                '待付款' }}
+            <el-tag :type="'success'">
+              {{ NEW_ORDER_STATUS_MAP[scope.row.status] }}
             </el-tag>
           </template>
         </el-table-column>
@@ -245,9 +244,8 @@ onMounted(() => {
         </el-form-item>
         <el-form-item label="订单状态" prop="status">
           <el-select v-model="formGoodsOrder.status" placeholder="请选择订单状态">
-            <el-option
-              v-for="item in [{ value: 0, label: '待付款' }, { value: 1, label: '待发货' }, { value: 2, label: '已发货' }, { value: 3, label: '交易成功' }, { value: 4, label: '售后中' }, { value: 5, label: '交易关闭-用户取消' }, { value: 6, label: '交易关闭-超时取消' }, { value: 7, label: '交易关闭-商家取消' }]"
-              :key="item.value" :label="item.label" :value="item.value" />
+            <el-option v-for="item in NEW_ORDER_STATUS_OPTIONS" :key="item.value" :label="item.label"
+              :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="收货人姓名" prop="receiverName">
