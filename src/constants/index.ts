@@ -412,13 +412,13 @@ export const NEW_PAY_STATUS_MAP = {
 
 export const NEW_ORDER_STATUS_OPTIONS = [
   { value: 0, label: "待付款" },
-  { value: 0, label: "待发货" },
-  { value: 0, label: "已发货" },
-  { value: 0, label: "交易成功" },
-  { value: 0, label: "售后中" },
-  { value: 0, label: "交易关闭-用户取消" },
-  { value: 0, label: "交易关闭-超时取消" },
-  { value: 0, label: "交易关闭-商家取消" },
+  { value: 1, label: "待发货" },
+  { value: 2, label: "已发货" },
+  { value: 3, label: "交易成功" },
+  { value: 4, label: "售后中" },
+  { value: 5, label: "交易关闭-用户取消" },
+  { value: 6, label: "交易关闭-超时取消" },
+  { value: 7, label: "交易关闭-商家取消" },
 ]
 
 export const NEW_ORDER_STATUS_MAP = {
