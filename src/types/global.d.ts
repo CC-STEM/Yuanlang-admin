@@ -514,6 +514,7 @@ declare namespace API {
     payPlatform?: string // 支付平台【wechatpay|alipay】
     channel?: string // 支付渠道 【native|jsapi|h5】）
     userId?: number // 用户ID
+    userName?: string
     total?: number // 订单总金额
     payStatus?: number // 支付状态（0：未支付、1：已支付、-1、支付失败
     paidAt?: string // 支付时间
@@ -576,5 +577,17 @@ declare namespace API {
   interface QueryGoodsOrderResponse extends BaseRes {
     data: GoodsOrder[]
     total: number
+  }
+
+  interface DictPair {
+    label: string;
+    value: string;
+  }
+
+  type DictState = Record<string, DictPair[]>;
+
+
+  interface QueryDictMapRes extends BaseRes {
+    data: DictState
   }
 }

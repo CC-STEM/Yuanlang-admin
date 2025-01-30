@@ -12,24 +12,27 @@ import { utcToShanghaiTime } from '@/utils/utcformatTime'
 
 import { GOODS_SELL_STATUS_OPTIONS, GOODS_SELL_STATUS_MAP } from '@/constants/index'
 import { API } from '#/global'
+import { useDictStore } from '@/store/modules/dict'
 
 const formRef = ref<FormInstance>()
 const total = ref(0)
 const visible = ref(false)
 const loading = ref(false)
 const uploadUrl = ref(`${import.meta.env.VITE_APP_API_BASEURL}/upload/file`)
+const dictStore = useDictStore()
+const goodsDictMap = computed(() => dictStore.dictMap && dictStore.dictMap['goods_category'])
 
 const formInline = reactive<API.QueryGoodsBody>({
   name: '',
   page: 1,
   size: 10,
-  sellStatus: 0
+  // sellStatus: 0
 })
 
 const formGoodsRef = ref<FormInstance>()
 const activeGoodsId = ref(0)
-const activeGoods = ref<API.Goods | null>(null)
-let formGoods = reactive<API.Goods>({
+// const activeGoods = ref<API.Goods | null>(null)
+let formGoods = ref<API.Goods>({
   name: '',
   intro: '',
   sellStatus: 0,
@@ -37,7 +40,8 @@ let formGoods = reactive<API.Goods>({
   detail: '',
   originalPrice: 1,
   sellingPrice: 1,
-  stockNum: 1
+  stockNum: 1,
+  category: 0
 })
 
 const rules = reactive<FormRules>({
@@ -78,8 +82,8 @@ async function queryGoodsList() {
 
 function handleUpdateGoods(row: API.Goods) {
   activeGoodsId.value = row.id!
-  activeGoods.value = row
-  formGoods = row
+  // activeGoods.value = row
+  formGoods.value = { ...row }
   // const { name, status, des, order, coverImg } = row
   // nextTick(() => {
   //   Object.assign(formGoods, { name, status, des, order, coverImg })
@@ -107,7 +111,7 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = (
   response,
   uploadFile,
 ) => {
-  formGoods.coverImg = response.data
+  formGoods.value.coverImg = response.data
 }
 
 const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
@@ -129,11 +133,11 @@ function handlerSubmit(formEl: FormInstance | undefined) {
   formEl?.validate(async (valid) => {
     if (valid) {
       if (activeGoodsId.value) {
-        await ApiGoods.updateGoods({ id: activeGoodsId.value, ...formGoods })
+        await ApiGoods.updateGoods({ id: activeGoodsId.value, ...formGoods.value })
         ElMessage({ type: 'success', message: '更新商品成功！' })
       }
       else {
-        await ApiGoods.createGoods(formGoods as API.CreateGoodsBody)
+        await ApiGoods.createGoods(formGoods.value as API.CreateGoodsBody)
         ElMessage({ type: 'success', message: '创建新商品成功！' })
       }
       visible.value = false
@@ -188,6 +192,11 @@ onMounted(() => {
           </template>
         </el-table-column>
         <el-table-column prop="name" label="商品名称" />
+        <el-table-column prop="category" label="商品分类">
+          <template #default="scope">
+            {{ goodsDictMap?.find(item => Number(item.value) === scope.row.category)?.label }}
+          </template>
+        </el-table-column>
         <el-table-column prop="stockNum" label="库存数量" />
         <el-table-column prop="originalPrice" label="原价" />
         <el-table-column prop="sellingPrice" label="实际售价" />
@@ -230,6 +239,12 @@ onMounted(() => {
       <el-form ref="formGoodsRef" label-position="right" label-width="100px" :model="formGoods" :rules="rules">
         <el-form-item label="商品名称" prop="name">
           <el-input v-model="formGoods.name" placeholder="请填写商品名称" />
+        </el-form-item>
+        <el-form-item label="商品类别" prop="category">
+          <el-select v-model="formGoods.category">
+            <el-option v-for="item in goodsDictMap" :key="item.value" :label="item.label"
+              :value="Number(item.value)"></el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="商品上架状态" prop="status">
           <el-switch v-model="formGoods.sellStatus" :active-value="1" :inactive-value="0" />
