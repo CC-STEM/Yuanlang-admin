@@ -30,7 +30,7 @@ const formInline = reactive<API.QueryDictDataBody>({
 const formDictDataRef = ref<FormInstance>()
 const activeDictDataId = ref(0)
 const activeDictData = ref<API.DictData | null>(null)
-let formDictData = reactive<API.DictData>({
+let formDictData = ref<API.DictData>({
   label: '',
   value: '',
   type: '',
@@ -77,8 +77,19 @@ async function queryDictDataList() {
 function handleUpdateDictData(row: API.DictData) {
   activeDictDataId.value = row.id!
   activeDictData.value = row
-  formDictData = row
+  formDictData.value = row
   visible.value = true
+}
+
+const handleCreateDictData = () => {
+  visible.value = true
+  formDictData.value = {
+    label: '',
+    value: '',
+    type: '',
+    status: 0,
+    remark: ''
+  }
 }
 
 function handlerCloseDialog(formEl: FormInstance | undefined) {
@@ -101,11 +112,11 @@ function handlerSubmit(formEl: FormInstance | undefined) {
   formEl?.validate(async (valid) => {
     if (valid) {
       if (activeDictDataId.value) {
-        await ApiDictData.updateDictData({ id: activeDictDataId.value, ...formDictData })
+        await ApiDictData.updateDictData({ id: activeDictDataId.value, ...formDictData.value })
         ElMessage({ type: 'success', message: '更新字典值成功！' })
       }
       else {
-        await ApiDictData.createDictData(formDictData as API.CreateDictDataBody)
+        await ApiDictData.createDictData(formDictData.value as API.CreateDictDataBody)
         ElMessage({ type: 'success', message: '创建新字典值成功！' })
       }
       visible.value = false
@@ -146,7 +157,7 @@ onMounted(() => {
             重置
           </el-button>
         </el-form-item>
-        <el-button type="success" style="float: right;" @click="visible = true">
+        <el-button type="success" style="float: right;" @click="handleCreateDictData">
           创建字典值
           <el-icon class="ml-3">
             <Plus />
