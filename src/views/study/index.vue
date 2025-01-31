@@ -10,6 +10,8 @@ import type { FormInstance, FormRules, UploadProps } from 'element-plus'
 import ApiStudyResource from '@/api/modules/studyResource'
 import { utcToShanghaiTime } from '@/utils/utcformatTime'
 import { STUDY_RESOURCE_LEVEL_OPTIONS, STUDY_RESOURCE_LEVEL_MAP, STUDY_RESOURCE_CATEGORY_OPTIONS, STUDY_RESOURCE_CATEGORY_MAP } from '@/constants/index'
+import { useDictStore } from '@/store/modules/dict'
+
 
 import { API } from '#/global'
 
@@ -18,6 +20,9 @@ const total = ref(0)
 const visible = ref(false)
 const loading = ref(false)
 const uploadUrl = ref(`${import.meta.env.VITE_APP_API_BASEURL}/upload/file`)
+const dictStore = useDictStore()
+const studyResouceCategoryDictMap = computed(() => dictStore.dictMap && dictStore.dictMap['study_resource_category'])
+const studyResouceLevelDictMap = computed(() => dictStore.dictMap && dictStore.dictMap['study_resource_level'])
 
 const formInline = reactive<API.QueryStudyResourceBody>({
   name: '',
@@ -30,7 +35,7 @@ const formInline = reactive<API.QueryStudyResourceBody>({
 const formStudyResourceRef = ref<FormInstance>()
 const activeStudyResourceId = ref(0)
 const activeStudyResource = ref<API.StudyResource | null>(null)
-let formStudyResource = reactive<API.StudyResource>({
+let formStudyResource = ref<API.StudyResource>({
   name: '',
   intro: '',
   level: 0,
@@ -56,6 +61,18 @@ const dialogButton = computed(() => {
   return activeStudyResourceId.value ? '确认更新' : '确认新增'
 })
 
+const createStudyResouce = () => {
+  activeStudyResourceId.value = 0
+  formStudyResource.value = {
+    name: '',
+    intro: '',
+    level: 0,
+    category: 0,
+    src: ''
+  }
+  visible.value = true
+}
+
 async function queryStudyResourceList() {
   try {
     loading.value = true
@@ -74,7 +91,7 @@ async function queryStudyResourceList() {
 function handleUpdateStudyResource(row: API.StudyResource) {
   activeStudyResourceId.value = row.id!
   activeStudyResource.value = row
-  formStudyResource = row
+  formStudyResource.value = { ...row }
   visible.value = true
 }
 
@@ -98,7 +115,7 @@ const handleVideoUploadSuccess: UploadProps['onSuccess'] = (
   response,
   uploadFile,
 ) => {
-  formStudyResource.src = response.data
+  formStudyResource.value.src = response.data
 }
 
 const beforeVideoUpload: UploadProps['beforeUpload'] = (rawFile) => {
@@ -121,11 +138,11 @@ function handlerSubmit(formEl: FormInstance | undefined) {
   formEl?.validate(async (valid) => {
     if (valid) {
       if (activeStudyResourceId.value) {
-        await ApiStudyResource.updateStudyResource({ id: activeStudyResourceId.value, ...formStudyResource })
+        await ApiStudyResource.updateStudyResource({ id: activeStudyResourceId.value, ...formStudyResource.value })
         ElMessage({ type: 'success', message: '更新资源成功！' })
       }
       else {
-        await ApiStudyResource.createStudyResource(formStudyResource as API.CreateStudyResourceBody)
+        await ApiStudyResource.createStudyResource(formStudyResource.value as API.CreateStudyResourceBody)
         ElMessage({ type: 'success', message: '创建新资源成功！' })
       }
       visible.value = false
@@ -151,14 +168,14 @@ onMounted(() => {
         </el-form-item>
         <el-form-item style="width: 200px;" label="资源等级" prop="level">
           <el-select v-model="formInline.level" placeholder="请选择资源等级" clearable>
-            <el-option v-for="item in STUDY_RESOURCE_LEVEL_OPTIONS" :key="item.value" :label="item.label"
-              :value="item.value" />
+            <el-option v-for="item in studyResouceLevelDictMap" :key="item.value" :label="item.label"
+              :value="Number(item.value)" />
           </el-select>
         </el-form-item>
         <el-form-item style="width: 200px;" label="资源分类" prop="category">
           <el-select v-model="formInline.category" placeholder="请选择资源分类" clearable>
-            <el-option v-for="item in STUDY_RESOURCE_CATEGORY_OPTIONS" :key="item.value" :label="item.label"
-              :value="item.value" />
+            <el-option v-for="item in studyResouceCategoryDictMap" :key="item.value" :label="item.label"
+              :value="Number(item.value)" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -169,7 +186,7 @@ onMounted(() => {
             重置
           </el-button>
         </el-form-item>
-        <el-button type="success" style="float: right;" @click="visible = true">
+        <el-button type="success" style="float: right;" @click="createStudyResouce">
           创建资源
           <el-icon class="ml-3">
             <Plus />
@@ -189,14 +206,14 @@ onMounted(() => {
         <el-table-column prop="level" label="资源等级">
           <template #default="scope">
             <el-tag>
-              {{ STUDY_RESOURCE_LEVEL_MAP[scope.row.level] }}
+              {{ studyResouceLevelDictMap?.find((item) => Number(item.value) === scope.row.level)?.label }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="category" label="资源分类">
           <template #default="scope">
             <el-tag>
-              {{ STUDY_RESOURCE_CATEGORY_MAP[scope.row.category] }}
+              {{ studyResouceCategoryDictMap?.find((item) => Number(item.value) === scope.row.category)?.label }}
             </el-tag>
           </template>
         </el-table-column>
@@ -232,14 +249,14 @@ onMounted(() => {
         </el-form-item>
         <el-form-item label="资源等级" prop="level">
           <el-select v-model="formStudyResource.level" placeholder="请选择资源等级">
-            <el-option v-for="item in STUDY_RESOURCE_LEVEL_OPTIONS" :key="item.value" :label="item.label"
-              :value="item.value" />
+            <el-option v-for="item in studyResouceLevelDictMap" :key="item.value" :label="item.label"
+              :value="Number(item.value)" />
           </el-select>
         </el-form-item>
         <el-form-item label="资源分类" prop="category">
           <el-select v-model="formStudyResource.category" placeholder="请选择资源分类">
-            <el-option v-for="item in STUDY_RESOURCE_CATEGORY_OPTIONS" :key="item.value" :label="item.label"
-              :value="item.value" />
+            <el-option v-for="item in studyResouceCategoryDictMap" :key="item.value" :label="item.label"
+              :value="Number(item.value)" />
           </el-select>
         </el-form-item>
         <el-form-item label="资源地址" prop="src">
