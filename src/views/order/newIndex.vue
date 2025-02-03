@@ -29,7 +29,7 @@ const formInline = reactive<API.QueryGoodsOrderBody>({
 const formGoodsOrderRef = ref<FormInstance>()
 const activeGoodsOrderId = ref(0)
 const activeGoodsOrder = ref<API.GoodsOrder | null>(null)
-let formGoodsOrder = reactive<API.GoodsOrder>({
+let formGoodsOrder = ref<API.GoodsOrder>({
   orderNo: '',
   payPlatform: '',
   channel: '',
@@ -93,7 +93,7 @@ async function queryGoodsOrderList() {
 function handleUpdateGoodsOrder(row: API.GoodsOrder) {
   activeGoodsOrderId.value = row.id!
   activeGoodsOrder.value = row
-  formGoodsOrder = row
+  formGoodsOrder.value = row
   visible.value = true
 }
 
@@ -113,17 +113,30 @@ function handlerReset(formEl: FormInstance | undefined) {
   queryGoodsOrderList()
 }
 
+const handleCloseGoodsOrder = async (row: API.GoodsOrder) => {
+  await ApiGoodsOrder.closeGoodsOrder({ orderNo: row.orderNo! })
+  ElMessage.success('关闭订单成功')
+  queryGoodsOrderList()
+}
+
+// const handleOrderShipping = async (row: API.GoodsOrder) => {
+//   activeGoodsOrderId.value = row.id!
+//   activeGoodsOrder.value = row
+//   visible.value = true
+// }
+
 function handlerSubmit(formEl: FormInstance | undefined) {
   formEl?.validate(async (valid) => {
     if (valid) {
       if (activeGoodsOrderId.value) {
-        // TODO: 更新订单状态成功
+        // 发货
+        await ApiGoodsOrder.orderShipping({ orderNo: formGoodsOrder.value.orderNo!, expressTrackingNo: formGoodsOrder.value.expressTrackingNo! })
         // await ApiGoodsOrder.updateGoodsOrder({ orderNo: activeGoodsOrderId.value, ...formGoodsOrder })
         ElMessage({ type: 'success', message: '更新订单成功！' })
       }
       else {
-        await ApiGoodsOrder.createGoodsOrder(formGoodsOrder as API.CreateGoodsOrderBody)
-        ElMessage({ type: 'success', message: '创建新订单成功！' })
+        // await ApiGoodsOrder.createGoodsOrder(formGoodsOrder.value as API.CreateGoodsOrderBody)
+        // ElMessage({ type: 'success', message: '创建新订单成功！' })
       }
       visible.value = false
       queryGoodsOrderList()
@@ -173,7 +186,7 @@ onMounted(() => {
 
     <page-main style="width: 100%;">
       <el-table v-loading="loading" border :data="tableData" style="width: 100%;" size="large">
-        <el-table-column prop="orderNo" label="订单号" />
+        <el-table-column fixed="left" prop="orderNo" label="订单号" />
         <el-table-column prop="payPlatform" label="支付平台" />
         <el-table-column prop="channel" label="支付渠道" />
         <el-table-column prop="userId" label="用户ID" />
@@ -196,11 +209,35 @@ onMounted(() => {
         <el-table-column prop="receiverName" label="收货人姓名" />
         <el-table-column prop="receiverPhone" label="收货人电话" />
         <el-table-column prop="receiverAddress" label="收货人地址" />
-        <el-table-column label="操作" width="200">
+        <el-table-column prop="shippingTime" label="发货时间">
           <template #default="scope">
-            <el-button link type="primary" size="small" @click="handleUpdateGoodsOrder(scope.row)">
-              编辑
+            {{ scope.row.shippingTime ? new Date(scope.row.shippingTime).toLocaleString() : '' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="completeTime" label="完成时间">
+          <template #default="scope">
+            {{ scope.row.completeTime ? new Date(scope.row.completeTime).toLocaleString() : '' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="applyAfterSaleTime" label="申请售后时间">
+          <template #default="scope">
+            {{ scope.row.applyAfterSaleTime ? new Date(scope.row.applyAfterSaleTime).toLocaleString() : '' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="closeTime" label="交易关闭时间">
+          <template #default="scope">
+            {{ scope.row.closeTime ? new Date(scope.row.closeTime).toLocaleString() : '' }}
+          </template>
+        </el-table-column>
+        <el-table-column fixed="right" label="操作" width="200">
+          <template #default="scope">
+            <el-button v-if="scope.row.status === 1" link type="primary" size="small"
+              @click="handleUpdateGoodsOrder(scope.row)">
+              订单发货
             </el-button>
+            <el-button
+              v-if="scope.row.status !== 3 && scope.row.status !== 5 && scope.row.status !== 6 && scope.row.status !== 7"
+              type="danger" link size="small" @click="handleCloseGoodsOrder(scope.row)">关闭订单</el-button>
             <el-popconfirm title="确认删除此订单么?" width="200" icon-color="red" @confirm="handleDeleteGoodsOrder(scope.row)">
               <template #reference>
                 <el-button link type="danger" size="small">
@@ -222,45 +259,45 @@ onMounted(() => {
       <el-form ref="formGoodsOrderRef" label-position="right" label-width="100px" :model="formGoodsOrder"
         :rules="rules">
         <el-form-item label="订单号" prop="orderNo">
-          <el-input v-model="formGoodsOrder.orderNo" placeholder="请填写订单号" />
+          <el-input disabled v-model="formGoodsOrder.orderNo" placeholder="请填写订单号" />
         </el-form-item>
         <el-form-item label="支付平台" prop="payPlatform">
-          <el-input v-model="formGoodsOrder.payPlatform" placeholder="请填写支付平台" />
+          <el-input disabled v-model="formGoodsOrder.payPlatform" placeholder="请填写支付平台" />
         </el-form-item>
         <el-form-item label="支付渠道" prop="channel">
-          <el-input v-model="formGoodsOrder.channel" placeholder="请填写支付渠道" />
+          <el-input disabled v-model="formGoodsOrder.channel" placeholder="请填写支付渠道" />
         </el-form-item>
         <el-form-item label="用户ID" prop="userId">
-          <el-input v-model="formGoodsOrder.userId" placeholder="请填写用户ID" />
+          <el-input disabled v-model="formGoodsOrder.userId" placeholder="请填写用户ID" />
         </el-form-item>
         <el-form-item label="订单总金额" prop="total">
-          <el-input v-model="formGoodsOrder.total" placeholder="请填写订单总金额" />
+          <el-input disabled v-model="formGoodsOrder.total" placeholder="请填写订单总金额" />
         </el-form-item>
         <el-form-item label="支付状态" prop="payStatus">
-          <el-select v-model="formGoodsOrder.payStatus" placeholder="请选择支付状态">
+          <el-select disabled v-model="formGoodsOrder.payStatus" placeholder="请选择支付状态">
             <el-option v-for="item in NEW_PAY_STATUS_OPTIONS" :key="item.value" :label="item.label"
               :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="订单状态" prop="status">
-          <el-select v-model="formGoodsOrder.status" placeholder="请选择订单状态">
+          <el-select disabled v-model="formGoodsOrder.status" placeholder="请选择订单状态">
             <el-option v-for="item in NEW_ORDER_STATUS_OPTIONS" :key="item.value" :label="item.label"
               :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="收货人姓名" prop="receiverName">
-          <el-input v-model="formGoodsOrder.receiverName" placeholder="请填写收货人姓名" />
+          <el-input disabled v-model="formGoodsOrder.receiverName" placeholder="请填写收货人姓名" />
         </el-form-item>
         <el-form-item label="收货人电话" prop="receiverPhone">
-          <el-input v-model="formGoodsOrder.receiverPhone" placeholder="请填写收货人电话" />
+          <el-input disabled v-model="formGoodsOrder.receiverPhone" placeholder="请填写收货人电话" />
         </el-form-item>
         <el-form-item label="收货人地址" prop="receiverAddress">
-          <el-input v-model="formGoodsOrder.receiverAddress" placeholder="请填写收货人地址" />
+          <el-input disabled v-model="formGoodsOrder.receiverAddress" placeholder="请填写收货人地址" />
         </el-form-item>
         <el-form-item label="快递单号" prop="expressTrackingNo">
           <el-input v-model="formGoodsOrder.expressTrackingNo" placeholder="请填写快递单号" />
         </el-form-item>
-        <el-form-item label="发货时间" prop="shippingTime">
+        <!-- <el-form-item label="发货时间" prop="shippingTime">
           <el-date-picker v-model="formGoodsOrder.shippingTime" type="datetime" placeholder="请选择发货时间" />
         </el-form-item>
         <el-form-item label="完成时间" prop="completeTime">
@@ -271,7 +308,7 @@ onMounted(() => {
         </el-form-item>
         <el-form-item label="关闭时间" prop="closeTime">
           <el-date-picker v-model="formGoodsOrder.closeTime" type="datetime" placeholder="请选择关闭时间" />
-        </el-form-item>
+        </el-form-item> -->
       </el-form>
       <template #footer>
         <span class="flex justify-end mr-5">
